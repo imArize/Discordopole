@@ -209,7 +209,7 @@ async def pokemon(ctx, stat_name, areaname = "", *, timespan = None, alt_timespa
         shiny_total = await queries.get_shiny_total(mon.id, area[0], timespan[0], timespan[1], bot.config)
         shiny_total = shiny_total + alt_shiny_total
         shiny_odds = int(round((shiny_total / shiny_count), 0))
-        text = text + f"{bot.locale['shinies']}: **1:{shiny_odds}** ({shiny_count:_}/{shiny_total:_})\n"
+        text = text + f"{bot.locale['shinies']}: **1:{shiny_odds}** ({shiny_count}/{shiny_total})\n"
     else:
         text = text + f"{bot.locale['shinies']}: **0**\n"
 
@@ -221,6 +221,7 @@ async def pokemon(ctx, stat_name, areaname = "", *, timespan = None, alt_timespa
     scan_numbers = await queries.get_scan_numbers(mon.id, area[0], timespan[0], timespan[1], bot.config)
     for scanned, hundos, zeros, nineties in scan_numbers:
         scanned_total = int(scanned) + int(alt_scan_numbers[0][0])
+        hundo_count = 0
         if scanned_total > 0:
             hundo_count = int(hundos) + int(alt_scan_numbers[0][1])
             zero_count = int(zeros) + int(alt_scan_numbers[0][2])
@@ -236,18 +237,17 @@ async def pokemon(ctx, stat_name, areaname = "", *, timespan = None, alt_timespa
     else:
         text = text + f"{bot.locale['hundos']}: **0/{scanned_total:_}**\n\n"
 
+#    if ninety_count > 0:
+#        ninety_odds = round((scanned_total / ninety_count), 0)
+#        text = text + f"{bot.locale['90']}: **{ninety_count:_}** (1:{int(ninety_odds)}) | "
+#    else:
+#        text = text + f"{bot.locale['90']}: **0** | "
 
-    if ninety_count > 0:
-        ninety_odds = round((scanned_total / ninety_count), 0)
-        text = text + f"{bot.locale['90']}: **{ninety_count:_}** (1:{int(ninety_odds)}) | "
-    else:
-        text = text + f"{bot.locale['90']}: **0** | "
-
-    if zero_count > 0:
-        zero_odds = round((scanned_total / zero_count), 0)
-        text = text + f"{bot.locale['0']}: **{zero_count:_}** (1:{int(zero_odds)})\n"
-    else:
-        text = text + f"{bot.locale['0']}: **0**\n"
+#    if zero_count > 0:
+#        zero_odds = round((scanned_total / zero_count), 0)
+#        text = text + f"{bot.locale['0']}: **{zero_count:_}** (1:{int(zero_odds)})\n"
+#    else:
+#        text = text + f"{bot.locale['0']}: **0**\n"
 
     embed.description = text.replace("_", bot.locale['decimal_comma']) 
     await message.edit(embed=embed)
@@ -274,17 +274,17 @@ async def pokemon(ctx, stat_name, areaname = "", *, timespan = None, alt_timespa
         mon_odds = int(round((mon_total / found_count), 0))
         mon_rate = str(round((found_count / days), 1)).replace(".", bot.locale['decimal_dot'])
 
-        text = text.replace(f"\n{bot.locale['90']}", f"{bot.locale['rarity']}: **1:{mon_odds}**\n{bot.locale['rate']}: **{mon_rate}/{bot.locale['day']}**\n\n{bot.locale['90']}")
+        text = text + f"{bot.locale['rarity']}: **1:{mon_odds}**\n{bot.locale['rate']}: **{mon_rate}/{bot.locale['day']}**\n\n"
 
-        boosted_odds = str(round((boosted_count / found_count * 100), 1)).replace(".", bot.locale['decimal_dot'])
-        text = text + f"{bot.locale['weatherboost']}: **{boosted_odds}%**\n"
+#        boosted_odds = str(round((boosted_count / found_count * 100), 1)).replace(".", bot.locale['decimal_dot'])
+#        text = text + f"{bot.locale['weatherboost']}: **{boosted_odds}%**\n"
 
         scanned_odds = str(round((scanned_total / found_count * 100), 1)).replace(".", bot.locale['decimal_dot'])
         text = text + f"{bot.locale['scanned']}: **{scanned_odds}%**\n\n"
 
         text = text + f"{bot.locale['total_found']}: **{found_count:_}**"
     else:
-        text = text.replace(f"\n{bot.locale['90']}", f"{bot.locale['rarity']}: **0**\n{bot.locale['rate']}: **0/{bot.locale['day']}**\n\n{bot.locale['90']}")
+        text = text + f"{bot.locale['rarity']}: **0**\n{bot.locale['rate']}: **0/{bot.locale['day']}**\n\n"
         text = text + f"{bot.locale['weatherboost']}: **0%**\n{bot.locale['scanned']}: **0**\n\n{bot.locale['total_found']}: **0**"
 
     embed.description = text.replace("_", bot.locale['decimal_comma'])

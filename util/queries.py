@@ -55,7 +55,7 @@ async def get_shiny_count(mon_id, area, starttime, endtime, config, use_alt_tabl
     if config['db_scan_schema'] == "mad":
         query_shiny_count = f"select count({table}.pokemon_id) from {table} join {shiny_table} stats on stats.encounter_id = {table}.encounter_id where stats.is_shiny=1 and {table}.pokemon_id={mon_id} AND ST_CONTAINS(ST_GEOMFROMTEXT('POLYGON(({area}))'), point(latitude, longitude)) AND disappear_time > convert_tz('{starttime}', '{config['timezone']}', '+00:00') AND disappear_time < convert_tz('{endtime}', '{config['timezone']}', '+00:00')"
     elif config['db_scan_schema'] == "rdm":
-        query_shiny_count = f"select sum(count) from pokemon_shiny_stats where pokemon_id = {mon_id} AND date >= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{starttime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d') AND date <= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{endtime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d')"
+        query_shiny_count = f"select ifnull(sum(count),0) from pokemon_shiny_stats where pokemon_id = {mon_id} AND date >= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{starttime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d') AND date <= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{endtime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d')"
     await cursor_shiny_count.execute(query_shiny_count)
     shiny_count = await cursor_shiny_count.fetchall()
     for var in shiny_count:
@@ -93,7 +93,7 @@ async def get_scan_numbers(mon_id, area, starttime, endtime, config, use_alt_tab
     if config['db_scan_schema'] == "mad":
         query_hundo_count = f"select count(pokemon_id) as scanned, ifnull(SUM(individual_attack = 15 AND individual_defense = 15 AND individual_stamina = 15), 0) AS iv100, ifnull(SUM(individual_attack = 0 AND individual_defense = 0 AND individual_stamina = 0), 0) AS iv0, ifnull(SUM(individual_attack + individual_defense + individual_stamina >= 41), 0) AS iv90 from {table} where pokemon_id = {mon_id} and individual_attack IS NOT NULL AND disappear_time > convert_tz('{starttime}', '{config['timezone']}', '+00:00') AND disappear_time < convert_tz('{endtime}', '{config['timezone']}', '+00:00') AND ST_CONTAINS(ST_GEOMFROMTEXT('POLYGON(({area}))'), point(latitude, longitude))"
     elif config['db_scan_schema'] == "rdm":
-        query_hundo_count = f"select ifnull(SUM(ivs.count), 0) as scanned, ifnull(SUM(hundos.count), 0) as iv100, 0 as iv0, 0 as iv90 from pokemon_iv_stats ivs left join pokemon_hundo_stats hundos on hundos.pokemon_id = ivs.pokemon_id and hundos.date = ivs.date where ivs.pokemon_id = {mon_id} and ivs.date >= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{starttime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d') AND ivs.date <= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{endtime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d') group by ivs.pokemon_id"
+        query_hundo_count = f"select ifnull(SUM(ivs.count), 0) as scanned, ifnull(SUM(hundos.count), 0) as iv100, 0 as iv0, 0 as iv90 from pokemon_iv_stats ivs left join pokemon_hundo_stats hundos on hundos.pokemon_id = ivs.pokemon_id and hundos.date = ivs.date where ivs.pokemon_id = {mon_id} and ivs.date >= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{starttime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d') AND ivs.date <= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{endtime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d')"
     await cursor_scan_numbers.execute(query_hundo_count)
     hundo_count = await cursor_scan_numbers.fetchall()
 
@@ -110,7 +110,7 @@ async def get_big_numbers(mon_id, area, starttime, endtime, config, use_alt_tabl
     if config['db_scan_schema'] == "mad":
         query_big_count = f"select count(pokemon_id), ifnull(sum(pokemon_id = {mon_id}), 0), ifnull(sum(weather_boosted_condition > 0 and pokemon_id = {mon_id}), 0), min(disappear_time) from {table} WHERE disappear_time > convert_tz('{starttime}', '{config['timezone']}', '+00:00') AND disappear_time < convert_tz('{endtime}', '{config['timezone']}', '+00:00') AND ST_CONTAINS(ST_GEOMFROMTEXT('POLYGON(({area}))'), point(latitude, longitude))"
     elif config['db_scan_schema'] == "rdm":
-        query_big_count = f"select sum(count), ifnull(sum(case when pokemon_id = {mon_id} then count else 0 end), 0), 0, min(date) from pokemon_stats WHERE date >= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{starttime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d') AND date <= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{endtime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d')"
+        query_big_count = f"select sum(count), ifnull(sum(case when pokemon_id = {mon_id} then count else 0 end), 0), 0, timestamp(min(date)) from pokemon_stats WHERE date >= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{starttime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d') AND date <= FROM_UNIXTIME(UNIX_TIMESTAMP(convert_tz('{endtime}', '{config['timezone']}', '+00:00')), '%Y-%m-%d')"
     await cursor_big_numbers.execute(query_big_count)
     big_numbers = await cursor_big_numbers.fetchall()
 
